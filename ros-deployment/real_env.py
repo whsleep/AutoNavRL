@@ -9,22 +9,22 @@ import time
 
 def reduce_lidar_scan(scan_array):
     """
-    Reduce LIDAR scan data dimensionality by averaging groups of 4 readings.
+    通过对 4 组读数取平均值来降低激光雷达扫描数据的维度。
     
-    Args:
-        scan_array (numpy.ndarray): Raw LIDAR scan data
+    参数：
+        scan_array(numpy.ndarray): 原始激光雷达扫描数据
         
-    Returns:
-        numpy.ndarray: Reduced LIDAR scan data
+    返回值
+        numpy.ndarray: 还原的激光雷达扫描数据
     """
-    # Make sure the length is divisible by 4, otherwise trim the excess elements
+    # 确保长度能被 4 整除，否则应修剪多余部分
     if len(scan_array) % 4 != 0:
         scan_array = scan_array[:-(len(scan_array) % 4)]
 
-    # Reshape the array into chunks of 4 elements
+    # 将数组重塑为 4 个元素的块状结构
     reshaped_array = np.array(scan_array).reshape(-1, 4)
 
-    # Compute the average for each chunk, excluding zeros
+    # 计算每个数据块的平均值，不包括零
     result = []
     for chunk in reshaped_array:
         non_zero_values = chunk[chunk != 0]
@@ -37,18 +37,18 @@ def reduce_lidar_scan(scan_array):
 
 def constrain_lidar_scan(bot_pos, yaw, angles, lidar_ranges, box_limits):
     """
-    Constrain LIDAR readings to stay within specified box limits.
-    This is usefull if your arena lack proper boundaries.
+    将激光雷达读数限制在指定的方框范围内。
+    如果你的竞技场缺乏适当的边界，这将非常有用。
     
-    Args:
-        bot_pos (tuple): (x, y) robot position
-        yaw (float): Robot orientation
-        angles (numpy.ndarray): LIDAR beam angles
-        lidar_ranges (numpy.ndarray): LIDAR range readings
-        box_limits (tuple): (min_x, max_x, min_y, max_y) environment boundaries
+    参数：
+        bot_pos （元组）： (x、y)机器人位置
+        yaw （浮点数）： 机器人方向
+        angles (numpy.ndarray): 激光雷达光束角度
+        lidar_ranges (numpy.ndarray): 激光雷达测距读数
+        box_limits （元组）： (min_x, max_x, min_y, max_y) 环境边界
         
-    Returns:
-        numpy.ndarray: Constrained LIDAR ranges
+    返回：
+        numpy.ndarray: 受约束的激光雷达范围
     """
     bot_x, bot_y = bot_pos
     min_x, max_x, min_y, max_y = box_limits
@@ -84,30 +84,32 @@ def constrain_lidar_scan(bot_pos, yaw, angles, lidar_ranges, box_limits):
 
 class REAL_ENV:
     """
-    Real robot environment class that interfaces with ROS.
+    与 ROS 接口的真实机器人环境类。
     
-    This class handles:
-    - LIDAR data processing
-    - Robot motion control
-    - State tracking and goal progress
-    - Collision detection
+    该类处理
+    - 激光雷达数据处理
+    - 机器人运动控制
+    - 状态跟踪和目标进度
+    - 碰撞检测
     
-    Attributes:
-        scan_sub (rospy.Subscriber): LIDAR scan subscriber
-        tf_listener (tf.TransformListener): TF listener for pose tracking
-        cmd_vel_pub (rospy.Publisher): Velocity command publisher
-        latest_scan (list): Most recent LIDAR scan data
-        robot_pose (list): Current robot position [x, y]
-        robot_yaw (float): Current robot orientation
-        collision (bool): Collision flag
-        goal_reached (bool): Goal reached flag
-        robot_goal (list): Target pose [x, y, yaw]
+    属性
+        scan_sub (rospy.Subscriber): 激光雷达扫描订阅器
+        tf_listener (tf.TransformListener): 用于姿势跟踪的 TF 监听器
+        cmd_vel_pub (rospy.Publisher): 速度指令发布器
+        latest_scan （列表）： 最新的激光雷达扫描数据
+        robot_pose(列表): 当前机器人位置 [x, y]
+        robot_yaw(浮点): 当前机器人方向
+        collision(bool): 碰撞标志 碰撞标志
+        goal_reached (bool): 已达到目标标志： 达到目标标志
+        robot_goal(列表): 目标姿势 [x、y、yaw]
     """
     
     def __init__(self, goal_pose=None):
-        """Initialize the real robot environment."""
+        """
+        初始化真实机器人环境
+        """
         # Subscribers
-        self.scan_sub = rospy.Subscriber('/lidar_scan', LaserScan, self.scan_callback)
+        self.scan_sub = rospy.Subscriber('/scan', LaserScan, self.scan_callback)
         self.tf_listener = tf.TransformListener()
 
         # Publishers
@@ -115,7 +117,7 @@ class REAL_ENV:
         
         # State variables
         self.latest_scan = []
-        self.robot_pose = 0.0
+        self.robot_pose = [0.0, 0.0]
         self.robot_yaw = 0.0
         self.collision = False
         self.goal_reached = False
@@ -133,26 +135,29 @@ class REAL_ENV:
 
     def scan_callback(self, data):
         """
-        Process incoming LIDAR scan data.
+        处理收到的激光雷达扫描数据
         
-        Args:
-            data (LaserScan): Raw LIDAR scan message
+        参数：
+            data (LaserScan): 原始激光雷达扫描信息
         """
         latest_scan = reduce_lidar_scan(data.ranges)
  
         bot_position = self.robot_pose
         bot_yaw = self.robot_yaw
-        lidar_offset = 0.15  # LIDAR is 0.15m ahead of robot center
+        lidar_offset = 0.15  # 激光雷达位于机器人中心前方 0.15 米处
 
-        # Calculate LIDAR position
-        lidar_x = bot_position[0] + lidar_offset * np.cos(self.robot_yaw)
-        lidar_y = bot_position[1] + lidar_offset * np.sin(self.robot_yaw)
+        # 计算激光雷达位置
+        # lidar_x = bot_position[0] + lidar_offset * np.cos(self.robot_yaw)
+        # lidar_y = bot_position[1] + lidar_offset * np.sin(self.robot_yaw)
         
-        # Generate LIDAR beam angles
-        lidar_angles = np.linspace(0, 2 * np.pi, num=420)
-        box_limits = (0, 6, 0, 6)  # Environment boundaries
+        lidar_x = bot_position[0]
+        lidar_y = bot_position[1] 
 
-        # Constrain LIDAR readings to environment boundaries
+        # 生成激光雷达光束角度按照提取后的个数
+        lidar_angles = np.linspace(0, 2 * np.pi, num=len(latest_scan))
+        box_limits = (-5, 5, -5, 5)  # 环境边界
+
+        # 将激光雷达读数限制在环境边界内
         latest_scan = constrain_lidar_scan(
             [lidar_x, lidar_y], 
             bot_yaw, 
@@ -161,10 +166,11 @@ class REAL_ENV:
             box_limits
         )
         
-        # Rotate scan data to align with robot orientation
-        self.latest_scan = np.roll(latest_scan, int(len(latest_scan) * 1/2))
+        # 旋转扫描数据，与机器人方向保持一致
+        self.latest_scan = latest_scan
+        # self.latest_scan = np.roll(latest_scan, int(len(latest_scan) * 1/2))
     
-        # Check for collisions
+        # 检查碰撞
         self.collision = min(self.latest_scan) < 0.15  # 15cm collision threshold
         if self.collision:
             cmd = Twist()
@@ -174,9 +180,11 @@ class REAL_ENV:
             print("Collision detected!")
 
     def get_robot_pose_from_tf(self):
-        """Get current robot pose from TF."""
-        self.tf_listener.waitForTransform("origin", "base_link", rospy.Time(0), rospy.Duration(0.1))
-        (trans, rot) = self.tf_listener.lookupTransform("origin", "base_link", rospy.Time(0))
+        """
+        从 TF 获取当前机器人姿势。
+        """
+        self.tf_listener.waitForTransform("map", "base_link", rospy.Time(0), rospy.Duration(0.1))
+        (trans, rot) = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
         
         self.robot_pose = [trans[0], trans[1]]
         _, _, self.robot_yaw = euler_from_quaternion(rot)
@@ -185,14 +193,14 @@ class REAL_ENV:
 
     def step(self, lin_velocity=0.0, ang_velocity=0.1):
         """
-        Execute one step in the environment.
+        在环境中执行一个步骤。
         
-        Args:
-            lin_velocity (float): Linear velocity command
-            ang_velocity (float): Angular velocity command
+        参数
+            lin_velocity （浮点）： 线速度指令
+            ang_velocity （浮点速度）： 角速度指令
             
-        Returns:
-            tuple: (scan_data, distance, cos, sin, collision, goal, diff_rad, action, reward)
+        返回 返回 返回 返回值值值值
+            元组： (scan_data, distance, cos, sin, collision, goal, diff_rad, action, reward)
         """
         self.timestep += 1
         self.get_robot_pose_from_tf()
@@ -202,7 +210,7 @@ class REAL_ENV:
             rospy.sleep(0.1)
             return None
 
-        # Publish velocity command
+        # 发布速度指令
         cmd = Twist()
         cmd.linear.x = lin_velocity
         cmd.angular.z = ang_velocity
@@ -211,25 +219,25 @@ class REAL_ENV:
 
         rospy.sleep(0.1)  # Allow time for motion
 
-        # Compute goal vector and progress
+        # 计算目标向量和进度
         goal_vector = [
             self.robot_goal[0] - self.robot_pose[0],
             self.robot_goal[1] - self.robot_pose[1],
         ]
 
-        # Calculate angle difference to goal
+        # 计算与球门的角度差
         diff_rad = float(((-self.robot_yaw + self.robot_goal[2] + np.pi) % (2 * np.pi)) - np.pi)
         distance = np.linalg.norm(goal_vector)
         goal = (distance < 0.15 and abs(diff_rad) < 0.15)  # 15cm position and 0.15rad angle threshold
 
-        # Update path length
+        # 更新路径长度
         if self.prev_pose is not None:
             delta = np.sqrt((self.robot_pose[0] - self.prev_pose[0])**2 +
                          (self.robot_pose[1] - self.prev_pose[1])**2)
             self.path_length += delta
         self.prev_pose = self.robot_pose
 
-        # Update velocity sums for averaging in metrics
+        # 更新速度总和，以便在度量中求取平均值
         self.linear_vel_sum += abs(lin_velocity)
         self.angular_vel_sum += abs(ang_velocity)
 
@@ -250,7 +258,7 @@ class REAL_ENV:
             print('Avg Linear:', self.linear_vel_sum/self.timestep)
             print('Avg Ang:', self.angular_vel_sum/self.timestep)
 
-        # Compute observation components
+        # 计算观测成分
         pose_vector = [np.cos(self.robot_yaw), np.sin(self.robot_yaw)]
         cos, sin = self.cossin(pose_vector, goal_vector)
         action = [lin_velocity, ang_velocity]
@@ -260,13 +268,13 @@ class REAL_ENV:
 
     def reset(self, goal_pose=None):
         """
-        Reset the environment with a new goal.
+        用新目标重置环境
         
-        Args:
-            goal_pose (list): [x, y, yaw] target pose
+        参数：
+            goal_pose （列表）： [x、y、yaw] 目标姿势
             
-        Returns:
-            tuple: Initial environment state
+        返回 返回 返回 返回值值值值
+            元组： 初始环境状态
         """
         # Reset metrics
         self.start_time = time.time()

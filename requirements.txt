@@ -2,6 +2,6 @@ stable-baselines3
 gym
 shapely
 pyyaml
-ir-sim>2.4.0
+ir-sim>2.3.0
 shimmy
 tensorboard

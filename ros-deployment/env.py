@@ -6,38 +6,38 @@ from real_env import REAL_ENV
 
 class RobotNavEnv(gym.Env):
     """
-    Custom Gym environment that wraps the REAL_ENV simulator for robot navigation.
+    自定义 Gym 环境，用于封装机器人导航的 REAL_ENV 模拟器。
     
-    This environment:
-    - Converts the simulator's outputs into a fixed-size observation space
-    - Defines a continuous action space for linear and angular velocities
-    - Handles state normalization and preprocessing
-    - Manages episode termination conditions
+    该环境
+    - 将模拟器的输出转换为固定大小的观测空间
+    - 为线速度和角速度定义连续的动作空间
+    - 处理状态规范化和预处理
+    - 管理情节终止条件
     
-    Attributes:
-        action_space (gym.spaces.Box): Continuous action space for linear and angular velocities
-        observation_space (gym.spaces.Box): Fixed-size observation space
-        state_dim (int): Dimension of the state vector
-        sim (REAL_ENV): Instance of the real environment simulator
-        time (int): Step counter for episode termination
+    属性
+        action_space (gym.spaces.Box): 线速度和角速度的连续动作空间
+        observation_space (gym.spaces.Box): 固定大小的观测空间
+        state_dim (int): 状态向量的尺寸
+        sim (REAL_ENV): 真实环境模拟器实例
+        time (int): 剧集终止的步骤计数器
     """
     def __init__(self):
         super(RobotNavEnv, self).__init__()
-        # Action space: [linear_velocity, angular_velocity]
-        # Linear velocity range: [-0.6, 0.6] m/s
-        # Angular velocity range: [-1.2, 1.2] rad/s
+        # 动作空间: [linear_velocity, angular_velocity]
+        # 线速度范围: [-0.6, 0.6] m/s
+        # 角速度范围: [-1.2, 1.2] rad/s
         self.action_space = spaces.Box(
             low=np.array([-0.6, -1.2]), 
             high=np.array([0.6, 1.2]), 
             dtype=np.float32
         )
         
-        # Observation space: 49-dimensional vector containing:
-        # - Binned LIDAR scan data (42 dimensions)
-        # - Distance to goal (1 dimension)
-        # - Goal direction cos/sin (2 dimensions)
-        # - Current linear/angular velocities (2 dimensions)
-        # - Goal angle difference cos/sin (2 dimensions)
+        # 观测空间：包含 49 维向量：
+        # - 分档激光雷达扫描数据（42 维）
+        # - 与目标的距离（1 维）
+        # 目标方向 cos/sin（2 维）
+        # 当前线速度/角速度（2 维）
+        # 球门角度差余弦/正弦（2 维）
         self.state_dim = 49
         self.observation_space = spaces.Box(
             low=-1, 
@@ -46,28 +46,28 @@ class RobotNavEnv(gym.Env):
             dtype=np.float32
         )
         
-        # Initialize simulator with default goal
+        # 用默认目标初始化模拟器
         self.goal = [0, 0, 0]
         self.sim = REAL_ENV(goal_pose=self.goal)
         self.time = 0
 
     def prepare_state(self, data):
         """
-        Process raw environment data into a normalized state vector.
+        将原始环境数据处理为规范化状态向量。
         
-        Args:
-            data (tuple): Raw environment data containing:
-                - LIDAR scan data
-                - Distance to goal
-                - Goal direction cos/sin
-                - Collision flag
-                - Goal reached flag
-                - Angle difference
-                - Last action
-                - Reward
+        参数
+            data(元组): 原始环境数据，包含
+                - 激光雷达扫描数据
+                - 到目标的距离
+                - 目标方向余弦/正弦
+                - 碰撞标志
+                - 到达目标标志
+                - 角度差
+                - 最后动作
+                - 奖励
         
-        Returns:
-            tuple: (normalized_state, terminal_flag)
+        返回值
+            元组：（归一化状态、终点标志）
         """
         latest_scan, distance, cos, sin, collision, goal, diff_rad, action, reward = data
         latest_scan = np.array(latest_scan)
@@ -78,13 +78,15 @@ class RobotNavEnv(gym.Env):
 
         # Bin LIDAR data to reduce dimensionality
         max_bins = self.state_dim - 7
-        bin_size = int(np.ceil(len(latest_scan) / max_bins))
+        bin_size = int(np.floor(len(latest_scan) / max_bins))
         min_values = []
         
         for i in range(0, len(latest_scan), bin_size):
             bin = latest_scan[i : i + min(bin_size, len(latest_scan) - i)]
             # Find the minimum value in the current bin and append it to the min_values list
             min_values.append(min(bin) / 10)
+            if len(min_values) >= max_bins:
+                break
 
         # Normalize distance and velocities
         distance /= 10

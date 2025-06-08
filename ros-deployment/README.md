@@ -45,7 +45,7 @@ roslaunch your_robot_navigation amcl.launch
 
 3. Run the navigation system:
 ```bash
-python3 run.py --model-path ../../models/td3.zip
+python3 ros-deployment/run.py --model-path models/td3_robot_nav_model.zip
 ```
 
 4. Set goals using RViz:

@@ -6,7 +6,7 @@ from train import make_env
 if __name__ == '__main__':
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Evaluate trained model for robot navigation')
-    parser.add_argument('--model-path', type=str, default="models/td3.zip",
+    parser.add_argument('--model-path', type=str, default="models/td3_robot_nav_model.zip",
                        help='Path to the trained model')
     parser.add_argument('--num-episodes', type=int, default=10,
                        help='Number of evaluation episodes')
