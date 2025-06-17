@@ -128,7 +128,7 @@ class RobotNavEnv(gym.Env):
         # 下采样激光扫描数据 
         max_bins = self.state_dim - 7
         # 将2D点云按照扇形区域进行划分
-        bin_size = int(np.ceil(len(latest_scan) / max_bins))
+        bin_size = int(np.floor(len(latest_scan) / max_bins))
         min_values = []
 
         # 创建扇形范围并获取最小值
@@ -136,6 +136,9 @@ class RobotNavEnv(gym.Env):
             bin = latest_scan[i : i + min(bin_size, len(latest_scan) - i)]
             # 找到当前扇形中的最小值并将其追加到min_values列表中
             min_values.append(min(bin) / 10)
+            if len(min_values) >= max_bins:
+                break
+
 
         # 将值归一化到[0, 1]范围
         distance /= 10
@@ -186,7 +189,7 @@ class RobotNavEnv(gym.Env):
         # 执行模拟
         sim_data = self.sim.step(lin_velocity=lin_velocity, ang_velocity=ang_velocity)
         
-        obs, terminal = self.prepare_minstate(sim_data)
+        obs, terminal = self.prepare_state(sim_data)
         reward = sim_data[-1]
 
         # 更新指标
@@ -227,7 +230,7 @@ def make_env(render=False):
 if __name__ == '__main__':
     # 解析命令行参数
     parser = argparse.ArgumentParser(description='训练TD3模型用于机器人导航')
-    parser.add_argument('--num-envs', type=int, default=7,
+    parser.add_argument('--num-envs', type=int, default=1,
                        help='并行训练环境的数量')
     parser.add_argument('--total-timesteps', type=int, default=200000,
                        help='训练的总时间步数')

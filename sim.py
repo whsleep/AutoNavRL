@@ -13,7 +13,7 @@ class SIM_ENV:
     处理状态跟踪、奖励计算和环境交互。
     """
     
-    def __init__(self, world_file="robot_world.yaml", render=False):
+    def __init__(self, world_file="robot_world_copy.yaml", render=False):
         """
         初始化模拟环境。
         
@@ -188,16 +188,16 @@ class SIM_ENV:
         # 初始化机器人状态
         if robot_state is None:
             # 随机刷新在地图范围内
-            robot_state = [[random.uniform(0.5, 5.5)], 
-                          [random.uniform(0.5, 5.5)], 
+            robot_state = [[random.uniform(0.5, 19.5)], 
+                          [random.uniform(0.5, 19.5)], 
                           [0]]
         self.env.robot.set_state(state=np.array(robot_state), init=True)
 
         # 放置障碍物
         if random_obstacles:
             self.env.random_obstacle_position(
-                range_low=[0, 0, -3.14],
-                range_high=[6, 6, 3.14],
+                range_low=[2, 2, -3.14],
+                range_high=[18, 18, 3.14],
                 ids=list(range(1, 7)),
                 non_overlapping=True
             )
@@ -223,8 +223,8 @@ class SIM_ENV:
             列表： 有效目标位置 [x、y、θ]
         """
         while True:
-            goal = [[random.uniform(0.5, 5.5)], 
-                   [random.uniform(0.5, 5.5)], 
+            goal = [[random.uniform(0.5, 15.5)], 
+                   [random.uniform(0.5, 15.5)], 
                    [random.uniform(-3.14, 3.14)]]
             
             # 检查目标是否与障碍物重叠
