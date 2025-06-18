@@ -155,7 +155,8 @@ class REAL_ENV:
 
         # 生成激光雷达光束角度按照提取后的个数
         lidar_angles = np.linspace(0, 2 * np.pi, num=len(latest_scan))
-        box_limits = (-5, 5, -5, 5)  # 环境边界
+        # TODO
+        box_limits = (-8, 8, -8, 8)  # 环境边界
 
         # 将激光雷达读数限制在环境边界内
         latest_scan = constrain_lidar_scan(

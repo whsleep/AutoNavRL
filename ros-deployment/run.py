@@ -61,7 +61,7 @@ def run_rl(eval_env, goal):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run RL navigation with ROS')
-    parser.add_argument('--model-path', type=str, default="models/td3_robot_nav_model.zip",
+    parser.add_argument('--model-path', type=str, default="models/new_new_td3_robot_nav_model.zip",
                        help='Path to the trained model')
     args = parser.parse_args()
 
