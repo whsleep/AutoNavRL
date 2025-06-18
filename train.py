@@ -29,12 +29,12 @@ class RobotNavEnv(gym.Env):
         # 环境配置
         self.render = render
         self.state_dim = 49  # 观测空间的维度
-        self.max_steps = 150  # 每个episode的最大步数
+        self.max_steps = 1500  # 每个episode的最大步数
         
         # 定义动作空间(线速度和角速度)
         self.action_space = spaces.Box(
-            low=np.array([-0.6, -1.2]),  # [最小线速度, 最小角速度]
-            high=np.array([0.6, 1.2]),   # [最大线速度, 最大角速度]
+            low=np.array([-1.0, -3.14/2]),  # [最小线速度, 最小角速度]
+            high=np.array([1.0, 3.14/2]),   # [最大线速度, 最大角速度]
             dtype=np.float32
         )
         
@@ -123,6 +123,7 @@ class RobotNavEnv(gym.Env):
 
         # 处理激光扫描中的无穷大值
         inf_mask = np.isinf(latest_scan)
+        # TODO
         latest_scan[inf_mask] = 10 # 无穷大值设置为雷达的最远检测距离
 
         # 下采样激光扫描数据 
@@ -142,8 +143,8 @@ class RobotNavEnv(gym.Env):
 
         # 将值归一化到[0, 1]范围
         distance /= 10
-        lin_vel = (action[0] + 0.6) / 1.2
-        ang_vel = (action[1] + 1.2) / 2.4
+        lin_vel = (action[0] + 1.0) / 2.0
+        ang_vel = (action[1] + 3.14/2) / 3.14
         
         # 将角度差转换为cos/sin表示
         rad_cos = np.cos(diff_rad)
@@ -210,7 +211,7 @@ class RobotNavEnv(gym.Env):
         return obs, reward, done, info
 
 
-def make_env(render=False):
+def make_env(render=True):
     """
     创建新实例的RobotNavEnv的工具函数。
     用于创建多个并行环境。
@@ -230,11 +231,11 @@ def make_env(render=False):
 if __name__ == '__main__':
     # 解析命令行参数
     parser = argparse.ArgumentParser(description='训练TD3模型用于机器人导航')
-    parser.add_argument('--num-envs', type=int, default=1,
+    parser.add_argument('--num-envs', type=int, default=8,
                        help='并行训练环境的数量')
     parser.add_argument('--total-timesteps', type=int, default=200000,
                        help='训练的总时间步数')
-    parser.add_argument('--model-path', type=str, default="models/td3_robot_nav_model",
+    parser.add_argument('--model-path', type=str, default="models/new_new_td3_robot_nav_model",
                        help='保存/加载模型的路径')
     parser.add_argument('--tensorboard-log', type=str, default="./td3_robot_nav_tensorboard/",
                        help='Tensorboard日志目录')

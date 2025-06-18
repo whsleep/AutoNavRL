@@ -119,7 +119,7 @@ class SIM_ENV:
         rotation_penalty = -abs(action[1]) * 0.4  # 过度旋转的处罚
         
         # 避障
-        safe_distance = 1.35 # 安全距离
+        safe_distance = 0.5 # 安全距离
         min_dist = min(laser_scan) # 雷达最近距离
         # 安全距离大于最小距离惩罚项为0，否则为 安全距离减去最小距离
         obstacle_penalty = -(safe_distance - min_dist) if min_dist < safe_distance else 0
@@ -188,8 +188,8 @@ class SIM_ENV:
         # 初始化机器人状态
         if robot_state is None:
             # 随机刷新在地图范围内
-            robot_state = [[random.uniform(0.5, 19.5)], 
-                          [random.uniform(0.5, 19.5)], 
+            robot_state = [[random.uniform(1.0, 19.0)], 
+                          [random.uniform(1.0, 19.0)], 
                           [0]]
         self.env.robot.set_state(state=np.array(robot_state), init=True)
 
@@ -223,8 +223,8 @@ class SIM_ENV:
             列表： 有效目标位置 [x、y、θ]
         """
         while True:
-            goal = [[random.uniform(0.5, 15.5)], 
-                   [random.uniform(0.5, 15.5)], 
+            goal = [[random.uniform(2.5, 15.5)], 
+                   [random.uniform(2.5, 15.5)], 
                    [random.uniform(-3.14, 3.14)]]
             
             # 检查目标是否与障碍物重叠
