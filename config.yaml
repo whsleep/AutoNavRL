@@ -1,0 +1,14 @@
+train_param:
+  linear_vel: [-0.6, 0.6]
+  angular_vel: [-1.2, 1.2]
+  lidar2d_max: 10.0
+sim_param:
+  position_rangeX: [0.5, 5.5]
+  position_rangeY: [0.5, 5.5]
+  obs_rangeX: [0.0, 6.0]
+  obs_rangeY: [0.0, 6.0]
+  obs_rangeAngle: [-3.14, 3.14]
+  obs_num: 7
+  goal_rangeX: [0.5, 5.5]
+  goal_rangeY: [0.5, 5.5]
+  goal_rangeAngle: [-3.14, 3.14]

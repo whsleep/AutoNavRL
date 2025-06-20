@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import yaml
 import shapely
 from irsim.lib.handler.geometry_handler import GeometryFactory
 from irsim.env import EnvBase
@@ -24,6 +25,19 @@ class SIM_ENV:
         # Initialize environment
         self.env = EnvBase(world_file, display=render, disable_all_plot=not render)
         self.robot_goal = self.env.get_robot_info(0).goal
+
+        # Read config.yaml 
+        with open('config.yaml', 'r') as file:
+            data = yaml.safe_load(file)
+        self.position_rangeX = data['sim_param']['position_rangeX']
+        self.position_rangeY = data['sim_param']['position_rangeY']
+        self.obs_rangeX = data['sim_param']['obs_rangeX']
+        self.obs_rangeY = data['sim_param']['obs_rangeY']
+        self.obs_rangeAngle = data['sim_param']['obs_rangeAngle']
+        self.obs_num = data['sim_param']['obs_num']
+        self.goal_rangeX = data['sim_param']['goal_rangeX']
+        self.goal_rangeY = data['sim_param']['goal_rangeY']
+        self.goal_rangeAngle = data['sim_param']['goal_rangeAngle']
         
         # Initialize tracking variables
         self._reset_tracking()
@@ -169,19 +183,21 @@ class SIM_ENV:
             tuple: Initial state information
         """
         # Initialize robot state
+        # done
         if robot_state is None:
-            robot_state = [[random.uniform(0.5, 5.5)], 
-                          [random.uniform(0.5, 5.5)], 
+            robot_state = [[random.uniform(self.position_rangeX[0], self.position_rangeX[1])], 
+                          [random.uniform(self.position_rangeY[0], self.position_rangeY[1])], 
                           [0]]
 
         self.env.robot.set_state(state=np.array(robot_state), init=True)
 
         # Place obstacles
+        # done
         if random_obstacles:
             self.env.random_obstacle_position(
-                range_low=[0, 0, -3.14],
-                range_high=[6, 6, 3.14],
-                ids=list(range(1, 7)),
+                range_low=[self.obs_rangeX[0], self.obs_rangeY[0], self.obs_rangeAngle[0]],
+                range_high=[self.obs_rangeX[1], self.obs_rangeY[1], self.obs_rangeAngle[1]],
+                ids=list(range(1, self.obs_num)),
                 non_overlapping=True
             )
 
@@ -206,9 +222,10 @@ class SIM_ENV:
             list: Valid goal position [x, y, theta]
         """
         while True:
-            goal = [[random.uniform(0.5, 5.5)], 
-                   [random.uniform(0.5, 5.5)], 
-                   [random.uniform(-3.14, 3.14)]]
+            # done
+            goal = [[random.uniform(self.goal_rangeX[0], self.goal_rangeX[1])], 
+                   [random.uniform(self.goal_rangeY[0], self.goal_rangeY[1])], 
+                   [random.uniform(self.goal_rangeAngle[0], self.goal_rangeAngle[1])]]
             
             # Check if goal overlaps with obstacles
             shape = {"name": "circle", "radius": 0.4}

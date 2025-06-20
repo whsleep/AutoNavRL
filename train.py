@@ -2,6 +2,7 @@ import gym
 from gym import spaces
 import numpy as np
 import argparse
+import yaml
 
 from sim import SIM_ENV
 from stable_baselines3 import TD3
@@ -26,15 +27,23 @@ class RobotNavEnv(gym.Env):
         """
         super(RobotNavEnv, self).__init__()
         
+        # Read config.yaml 
+        with open('config.yaml', 'r') as file:
+            data = yaml.safe_load(file)
+        self.linear_vel = data['train_param']['linear_vel']
+        self.angular_vel = data['train_param']['angular_vel']
+        self.lidar2d_max = data['train_param']['lidar2d_max']
+
         # Environment configuration
         self.render = render
         self.state_dim = 49  # Dimension of the observation space
         self.max_steps = 150  # Maximum number of steps per episode
         
+        # done
         # Define action space (linear and angular velocity)
         self.action_space = spaces.Box(
-            low=np.array([-0.6, -1.2]),  # [min_linear_vel, min_angular_vel]
-            high=np.array([0.6, 1.2]),   # [max_linear_vel, max_angular_vel]
+            low=np.array([self.linear_vel[0], self.angular_vel[0]]),  # [min_linear_vel, min_angular_vel]
+            high=np.array([self.linear_vel[1], self.angular_vel[1]]),   # [max_linear_vel, max_angular_vel]
             dtype=np.float32
         )
         
@@ -115,23 +124,30 @@ class RobotNavEnv(gym.Env):
 
         # Handle infinite values in laser scan
         inf_mask = np.isinf(latest_scan)
-        latest_scan[inf_mask] = 10
+        # done
+        latest_scan[inf_mask] = self.lidar2d_max
 
         # Downsample laser scan data
         max_bins = self.state_dim - 7
-        bin_size = int(np.ceil(len(latest_scan) / max_bins))
+        # done
+        bin_size = int(np.floor(len(latest_scan) / max_bins))
         min_values = []
         
         # Create bins and get minimum values
         for i in range(0, len(latest_scan), bin_size):
             bin = latest_scan[i : i + min(bin_size, len(latest_scan) - i)]
             # Find the minimum value in the current bin and append it to the min_values list
-            min_values.append(min(bin) / 10)
+            # done
+            min_values.append(min(bin) / self.lidar2d_max)
+            if len(min_values) >= max_bins:
+                break
 
         # Normalize values to [0, 1] range
-        distance /= 10
-        lin_vel = (action[0] + 0.6) / 1.2
-        ang_vel = (action[1] + 1.2) / 2.4
+        # done
+        distance /= self.lidar2d_max
+        # done
+        lin_vel = (action[0] + self.linear_vel[1]) / (self.linear_vel[1]*2.0)
+        ang_vel = (action[1] + self.angular_vel[1]) / (self.angular_vel[1]*2.0)
         
         # Convert angle difference to cos/sin representation
         rad_cos = np.cos(diff_rad)
@@ -195,7 +211,7 @@ class RobotNavEnv(gym.Env):
         return obs, reward, done, info
 
 
-def make_env(render=False):
+def make_env(render=True):
     """
     Utility function for creating new instances of RobotNavEnv.
     This is used to create multiple parallel environments.

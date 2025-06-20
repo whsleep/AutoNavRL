@@ -10,7 +10,7 @@ robot:
     shape: {name: 'circle', radius: 0.34}
     vel_min: [-2, -2]
     vel_max: [2, 2]
-    state: [2, 2, 0, 0]
+    state: [2, 2, 0]
     goal: [9, 9, 0]
     arrive_mode: state
     goal_threshold: 0.2
