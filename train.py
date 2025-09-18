@@ -12,14 +12,12 @@ from stable_baselines3.common.evaluation import evaluate_policy
 class RobotNavEnv(gym.Env):
     """
     自定义的Gym环境,封装了SIM_ENV模拟器。
-    
-    该环境将模拟器的输出转换为固定大小的观测值，定义了动作空间，并根据强化学习的需求对动作进行缩放。
+    该环境将模拟器的输出转换为固定大小的观测值，定义了动作空间，并根据强化学习的需求对动作进行缩放
     """
     
     def __init__(self, render=True):
         """
         初始化机器人导航环境。
-        
         Args:
             render (bool): 是否启用可视化
         """

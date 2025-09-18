@@ -4,7 +4,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 from train import make_env
 
 if __name__ == '__main__':
-    # Parse command line arguments
+    # 解析命令行参数
     parser = argparse.ArgumentParser(description='Evaluate trained model for robot navigation')
     parser.add_argument('--model-path', type=str, default="models/td3_robot_nav_model.zip",
                        help='Path to the trained model')
@@ -20,12 +20,17 @@ if __name__ == '__main__':
     # Create the environment with visualization enabled unless disabled
     eval_env = DummyVecEnv([make_env(render=not args.no_render)])
 
-    # Initialize metrics
+    # 成功率
     success_count = 0
+    # 全程时间步长
     total_timesteps = 0
+    # 全程距离
     total_distance = 0
+    # 全程平均速度
     total_velocity = 0
+    # 碰撞次数
     collision_count = 0
+    # 超时次数
     time_limit_count = 0
     
     # Run evaluation episodes
